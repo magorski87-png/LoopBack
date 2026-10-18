@@ -1,4 +1,4 @@
-/* LoopBack v1.0.0 — dependency-free web UI, native Android alarm bridge */
+/* LoopBack v1.1.0 — minimal web UI, native Android alarm bridge */
 (() => {
   'use strict';
   const KEY_PRESETS = 'loopback.presets.v1';
@@ -63,22 +63,22 @@
     try{state.permissions=await api.status();}catch(e){console.warn(e);}
     render();
   }
-  function header(){return `<header class="app-header"><div><p class="eyebrow">Your external memory</p><div class="brand">LoopBack<small>Start it. Leave it. We'll bring it back.</small></div></div><div class="mark">↻</div></header>`;}
+  function header(){return `<header class="app-header"><div><div class="brand">LoopBack<span class="brand-dot">.</span></div><p class="brand-caption">A little less to keep in mind.</p></div><div class="mark" aria-hidden="true">↻</div></header>`;}
   const section = (name,aside='') => `<div class="topline"><h2 class="section-title">${name}</h2><span class="muted">${aside}</span></div>`;
   function banner(){
-    if(state.nativeProblem)return `<div class="notice"><span>⚠️</span><div>Native reminder service unavailable. Android alarms are not scheduled. Check installation.<br><button data-tab="settings">Check settings</button></div></div>`;
-    if(!isNative())return `<div class="notice"><span>ⓘ</span><div>Browser preview: reminders only run while this page remains active. Install the Android app for background alerts.</div></div>`;
-    if(!state.permissions.notifications)return `<div class="notice"><span>⚠️</span><div>Notifications are disabled. Your reminders may be silent.<br><button data-action="enable-permissions">Enable notifications</button></div></div>`;
-    if(!state.permissions.exact)return `<div class="notice"><span>ⓘ</span><div>Exact alarms are disabled. Android may deliver reminders late.<br><button data-action="open-exact">Allow exact alarms</button></div></div>`;
+    if(state.nativeProblem)return `<div class="notice"><span>!</span><div>Native reminder service unavailable. Android alarms are not scheduled. Check installation.<br><button data-tab="settings">Check settings</button></div></div>`;
+    if(!isNative())return `<div class="notice"><span>i</span><div>Browser preview only. For reminders that work with the app closed, install the Android version.</div></div>`;
+    if(!state.permissions.notifications)return `<div class="notice"><span>!</span><div>Notifications are disabled, so reminders may be silent.<br><button data-action="enable-permissions">Enable notifications</button></div></div>`;
+    if(!state.permissions.exact)return `<div class="notice"><span>i</span><div>Android may delay reminders without exact alarm access.<br><button data-action="open-exact">Allow exact alarms</button></div></div>`;
     return '';
   }
   function home(){
     const overdue=state.runs.filter(x=>x.dueAt<=state.clock).length;
     const sorted=[...state.runs].sort((a,b)=>a.dueAt-b.dueAt);
-    return `${header()}${banner()}
-      <div class="hero"><p class="eyebrow">A little less to hold in your head</p><h1>Go do the next thing. We'll remember this one.</h1><p>Start an activity, set its time, and get reminders until you mark it handled.</p><div class="stat-row"><div class="stat"><b>${state.runs.length}</b> open loops</div><div class="stat"><b>${overdue}</b> need attention</div></div></div>
-      <div class="section">${section('Quick start','Tap to confirm time')}<div class="quick-grid">${state.presets.slice(0,6).map(p=>`<button class="quick-card" data-action="prepare-start" data-id="${escapeHTML(p.id)}"><span class="quick-icon ${escapeHTML(p.tone)}">${escapeHTML(p.emoji)}</span><div><div class="title-line">${escapeHTML(p.name)}</div><div class="quick-desc">${p.minutes} min preset · ↻ ${p.repeatMinutes} min</div></div></button>`).join('')}</div><button class="add-card" data-action="new-preset">＋ Add your own action</button></div>
-      <div class="section">${section('Open loops',state.runs.length+' active')}${sorted.length?sorted.map(runCard).join(''):`<div class="empty"><span class="empty-icon">✓</span><b>Nothing waiting on you</b><p>Start an action above. It'll stay here until you close the loop.</p></div>`}</div>`;
+    const status=`<div class="overview" aria-label="Activity overview"><div class="overview-icon ${overdue?'urgent':''}">${overdue?'!':'✓'}</div><div class="overview-copy"><strong>${overdue?`${overdue} ${overdue===1?'reminder needs':'reminders need'} attention`:state.runs.length?`${state.runs.length} ${state.runs.length===1?'activity':'activities'} in progress`:'All clear for now'}</strong><span>${state.runs.length} open loops · ${overdue} need attention</span></div></div>`;
+    const openSection=`<section class="section">${section('Open loops',state.runs.length+' active')}${sorted.length?sorted.map(runCard).join(''):`<div class="empty"><span class="empty-icon" aria-hidden="true">✓</span><b>Nothing waiting on you</b><p>Anything you start will stay here until it’s handled.</p></div>`}</section>`;
+    const actionsSection=`<section class="section">${section('Quick start','Tap to set a time')}<div class="quick-grid">${state.presets.slice(0,6).map(p=>`<button class="quick-card" data-action="prepare-start" data-id="${escapeHTML(p.id)}"><span class="quick-icon ${escapeHTML(p.tone)}" aria-hidden="true">${escapeHTML(p.emoji)}</span><div><div class="title-line">${escapeHTML(p.name)}</div><div class="quick-desc">${p.minutes} min preset</div></div></button>`).join('')}</div><button class="add-card" data-action="new-preset"><span aria-hidden="true">+</span> New action</button></section>`;
+    return `${header()}${banner()}${status}${state.runs.length?openSection+actionsSection:actionsSection+openSection}`;
   }
   function runCard(r){
     const p=presetById(r.presetId);
@@ -86,7 +86,7 @@
     const duration=Math.max(1,r.dueAt-r.startedAt);
     const progress=overdue?100:Math.max(0,Math.min(100,100-(r.dueAt-state.clock)/duration*100));
     const next=p?.nextId?state.presets.find(x=>x.id===p.nextId):null;
-    return `<article class="run-card ${overdue?'overdue':''}"><div class="run-head"><div style="display:flex;gap:11px;align-items:center"><span class="run-icon">${escapeHTML(p?.emoji||'⏱️')}</span><div><div class="run-title">${escapeHTML(r.title)}</div><div class="run-sub">${overdue?'Due '+fmt(r.dueAt):'Reminder at '+fmt(r.dueAt)}</div></div></div><span class="pill ${overdue?'warn':''}">${overdue?'Needs attention':'On track'}</span></div>
+    return `<article class="run-card ${overdue?'overdue':''}"><div class="run-head"><div style="display:flex;gap:11px;align-items:center"><span class="run-icon">${escapeHTML(p?.emoji||'⏱️')}</span><div><div class="run-title">${escapeHTML(r.title)}</div><div class="run-sub">${overdue?'Due '+fmt(r.dueAt):'Reminder at '+fmt(r.dueAt)}</div></div></div><span class="pill ${overdue?'warn':''}">${overdue?'Needs attention':'Running'}</span></div>
       <div class="timer-row"><span class="timer ${overdue?'warn':''}">${remaining(r.dueAt,state.clock)}</span><span class="muted">${overdue?'overdue':'remaining'}</span></div><div class="bar"><span style="width:${progress}%"></span></div>
       <div class="run-actions"><button data-action="snooze" data-id="${escapeHTML(r.id)}">+10 min</button><button data-action="change-time" data-id="${escapeHTML(r.id)}">Adjust</button><button class="primary" data-action="complete" data-id="${escapeHTML(r.id)}">${next?'Next step →':'Handled ✓'}</button></div></article>`;
   }
@@ -105,7 +105,7 @@
       <div class="setting"><b>Repeat until acknowledged</b><p>When time is up, your phone reminds you again at your action's repeat interval. Swiping away a notification does not complete the activity. Tap Handled in the app when you've actually done it.</p></div>
       <div class="setting"><b>Local and private</b><p>Your actions are stored on this device. No account, ads, tracking, or cloud sync. Uninstalling or clearing app data removes your history and presets.</p></div>
       <div class="setting"><b>Back up your setup</b><p>Export your custom actions and completion history to a JSON file for safekeeping.</p><div class="button-row"><button class="btn secondary" data-action="export-data">Export</button><button class="btn secondary" data-action="import-data">Import</button></div><input type="file" id="import-file" accept="application/json,.json" hidden></div>
-      <div class="note center" style="margin-top:24px">LoopBack v1.0.0 · Offline-first · Designed for unfinished things, not perfection.</div>`;
+      <div class="note center" style="margin-top:24px">LoopBack v1.1.0 · Offline-first · Designed for unfinished things, not perfection.</div>`;
   }
   const tabs=()=>`<nav class="tabs" aria-label="Main navigation">${[['home','Today','home'],['routines','Actions','list'],['history','Handled','clock'],['settings','Settings','settings']].map(([key,label,ico])=>`<button class="tab ${state.tab===key?'active':''}" data-tab="${key}" aria-current="${state.tab===key?'page':'false'}">${icons[ico]}<span>${label}</span></button>`).join('')}</nav>`;
   const render=()=>{state.clock=Date.now();app.innerHTML=`<main class="shell"><div class="content">${({home,routines,history,settings}[state.tab])()}</div>${tabs()}</main>`;};

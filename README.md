@@ -1,6 +1,10 @@
-# LoopBack v1.0.0
+# LoopBack v1.1.0
 
 A small, offline-first app that brings unfinished activities back into sight. Starts require **tap → confirm/adjust duration → start**. Reminders **repeat until handled**. Activity chains are explicit: finishing the washer presents a confirmation to start the dryer; it does not assume you've moved the clothes.
+
+## Visual update in v1.1
+
+This release retains the existing features and native reminder engine while simplifying the interface: compact status summary, flatter action tiles, neutral off-white background, restrained sage accent, tighter typography, quieter notifications, and simplified bottom navigation. Active loops move above action presets whenever there is something in progress.
 
 ## What's included
 
