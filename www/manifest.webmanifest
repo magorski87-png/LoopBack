@@ -1,0 +1,11 @@
+{
+  "name": "LoopBack — Close the loop",
+  "short_name": "LoopBack",
+  "description": "Tap an activity, set its reminder, and close the loop.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f9f6",
+  "theme_color": "#f8f9f6",
+  "icons": [{"src":"icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
